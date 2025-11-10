@@ -9,7 +9,7 @@ export class PayUGateway implements PaymentGateway {
   constructor(
     key: string,
     salt: string,
-    environment: 'test' | 'live' = 'live',
+    environment: 'test' | 'live' = 'test',
   ) {
     this.key = key;
     this.salt = salt;
@@ -35,9 +35,10 @@ export class PayUGateway implements PaymentGateway {
       firstname: meta?.firstname || 'User',
       email: meta?.email || 'user@example.com',
       phone: meta?.phone || '9999999999',
-      surl: 'http://localhost:5000/api/payments/payu-success',
-      furl: 'http://localhost:5000/api/payments/payu-failure',
-      service_provider: 'payu_paisa',
+
+      surl: 'https://transarctic-significatively-jace.ngrok-free.dev/api/payments/verify',
+      furl: 'https://transarctic-significatively-jace.ngrok-free.dev/api/payments/verify',
+
       udf1: '',
       udf2: '',
       udf3: '',
@@ -45,13 +46,12 @@ export class PayUGateway implements PaymentGateway {
       udf5: '',
     };
 
-    const hashString = `${data.key}|${data.txnid}|${data.amount}|${data.productinfo}|${data.firstname}|${data.email}|${data.udf1}|${data.udf2}|${data.udf3}|${data.udf4}|${data.udf5}||||||${this.salt}`;
-    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
+    const hashString =
+      `${data.key}|${data.txnid}|${data.amount}|${data.productinfo}|` +
+      `${data.firstname}|${data.email}|${data.udf1}|${data.udf2}|${data.udf3}|${data.udf4}|${data.udf5}` +
+      `||||||${this.salt}`;
 
-    // Add debug logs
-    console.log('Creating PayU Order');
-    console.log('Hash String:', hashString);
-    console.log('Generated Hash:', hash);
+    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
     return {
       gatewayOrderId: merchantOrderId,
@@ -66,15 +66,15 @@ export class PayUGateway implements PaymentGateway {
   }
 
   async verifyPayment(payload: any) {
-    const hashString = `${this.salt}|${payload.status}|||||||||||${payload.email}|${payload.firstname}|${payload.productinfo}|${payload.amount}|${payload.txnid}|${this.key}`;
+    const hashString =
+      `${this.salt}|${payload.status}||||||` +
+      `${payload.udf5}|${payload.udf4}|${payload.udf3}|${payload.udf2}|${payload.udf1}|` +
+      `${payload.email}|${payload.firstname}|${payload.productinfo}|${payload.amount}|${payload.txnid}|${this.key}`;
+
     const expectedHash = crypto
       .createHash('sha512')
       .update(hashString)
       .digest('hex');
-
-    console.log('Verifying PayU Payment');
-    console.log('Received Payload:', payload);
-    console.log('Expected Hash:', expectedHash);
 
     return {
       success: expectedHash === payload.hash,
@@ -82,8 +82,4 @@ export class PayUGateway implements PaymentGateway {
       gatewayPaymentId: payload.mihpayid,
     };
   }
-
-//   async refundPayment(paymentId: string, amount?: number) {
-//     return { refundId: `payu_ref_${paymentId}`, status: 'success' };
-//   }
 }

@@ -6,14 +6,14 @@ import { PaymentService } from './payment.service';
 import { PaymentProviderService } from './payment-provider.service';
 import { PaymentController } from './payment.controller';
 import { AdminPaymentProviderController } from './admin-payment-provider.controller';
-import { WebhookController } from './webhook.controller';
+import { PaymentWebhookController } from './webhook.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Payment, PaymentProvider])],
   providers: [PaymentService, PaymentProviderService],
   controllers: [
     PaymentController,
-    WebhookController,
+    PaymentWebhookController,
     AdminPaymentProviderController,
   ],
   exports: [PaymentService, PaymentProviderService],
